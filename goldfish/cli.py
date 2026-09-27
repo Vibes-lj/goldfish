@@ -12,16 +12,22 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("serve", help="run the goldfish MCP server (stdio)")
     sub.add_parser("status", help="print health across all three memory tiers")
 
+    MEMORY_TYPES = ("user", "feedback", "project", "reference", "insight")
+
     remember_p = sub.add_parser("remember", help="write a curated memory note")
     remember_p.add_argument("name")
     remember_p.add_argument("description")
-    remember_p.add_argument("--type", choices=("user", "feedback", "project", "reference"), required=True)
+    remember_p.add_argument("--type", choices=MEMORY_TYPES, required=True)
     remember_p.add_argument("--content", required=True, help="note body (markdown)")
 
     recall_p = sub.add_parser("recall", help="read or search curated memory notes")
     recall_p.add_argument("name", nargs="?")
     recall_p.add_argument("--query")
-    recall_p.add_argument("--type", choices=("user", "feedback", "project", "reference"))
+    recall_p.add_argument("--type", choices=MEMORY_TYPES)
+
+    reflect_p = sub.add_parser("reflect", help="gather raw cited evidence of recurring language (no synthesis)")
+    reflect_p.add_argument("--focus", help="one specific angle; omit for the default battery")
+    reflect_p.add_argument("--limit-per-query", type=int, default=5)
 
     args = parser.parse_args(argv)
 
@@ -43,6 +49,11 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "recall":
         from .server import goldfish_recall
         print(json.dumps(goldfish_recall(name=args.name, query=args.query, type=args.type), indent=2))
+        return
+
+    if args.command == "reflect":
+        from .server import goldfish_reflect
+        print(json.dumps(goldfish_reflect(focus=args.focus, limit_per_query=args.limit_per_query), indent=2))
         return
 
     parser.print_help()

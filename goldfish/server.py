@@ -4,6 +4,9 @@
   goldfish_context   -> claude-mem (recent session-compression summaries)
   goldfish_remember  -> memory_notes (write a curated, durable note)
   goldfish_recall    -> memory_notes (read/search curated notes)
+  goldfish_reflect   -> brain (raw cited evidence of the user's own recurring
+                        language — frustration, habit, drive, goal talk —
+                        never a synthesized conclusion; see its docstring)
   goldfish_status    -> health across all three backends
 
 brain-mcp and claude-mem each remain independently installable and useful; this
@@ -28,7 +31,15 @@ mcp = MCPServer(
         "One MCP server over three memory tiers for AI coding agents: "
         "goldfish_search (brain-mcp: full cited transcript history), "
         "goldfish_context (claude-mem: recent session-compression summaries), "
-        "goldfish_remember/goldfish_recall (memory_notes: curated durable facts). "
+        "goldfish_remember/goldfish_recall (memory_notes: curated durable facts, "
+        "including type='insight' — tentative, evidence-linked observations about "
+        "the user's own patterns). goldfish_reflect gathers raw cited evidence of "
+        "the user's recurring language for you to interpret yourself — it never "
+        "concludes anything on its own. If you notice a real pattern worth keeping, "
+        "write it via goldfish_remember(type='insight', ...) tied to the evidence, "
+        "phrased as tentative noticing, not diagnosis. Bring an insight up in "
+        "conversation only when it's genuinely relevant in the moment — rare and "
+        "well-placed, never a running commentary on the user as a person. "
         "goldfish_status reports which backends are actually installed and healthy."
     ),
 )
@@ -62,11 +73,16 @@ def goldfish_context(limit: int = 5) -> dict[str, Any]:
 
 @mcp.tool(title="Write a curated, durable memory note")
 def goldfish_remember(name: str, description: str, type: str, content: str) -> dict[str, Any]:
-    """Write a curated, durable memory note (user/feedback/project/reference).
+    """Write a curated, durable memory note (user/feedback/project/reference/insight).
 
     Use this for facts worth carrying into future sessions — not for raw
     transcript (that's captured automatically by brain) or session summaries
     (that's claude-mem's job) — only hand-picked, still-true facts.
+
+    type="insight" is for tentative, evidence-linked pattern observations about
+    the user (see goldfish_reflect) — distinct from type="user" (settled facts)
+    because insights are interpretive and should be revisited/pruned over time,
+    not treated as permanent truth.
     """
     note = Note(name=name, description=description, type=type, body=content)
     path = _store.write(note)
@@ -87,6 +103,52 @@ def goldfish_recall(name: Optional[str] = None, query: Optional[str] = None, typ
     else:
         notes = _store.list(type=type)
     return {"notes": [{"name": n.name, "description": n.description, "type": n.type} for n in notes]}
+
+
+DEFAULT_REFLECTION_QUERIES = [
+    "frustrated", "annoying", "I hate when", "why does this keep happening",
+    "I always", "I never", "every time I", "I keep",
+    "should have", "I need to", "burnt out", "overwhelmed", "tired of",
+    "excited about", "proud of", "love this",
+]
+
+
+@mcp.tool(title="Gather raw cited evidence of the user's own recurring language",
+          annotations={"readOnlyHint": True})
+def goldfish_reflect(focus: Optional[str] = None, limit_per_query: int = 5) -> dict[str, Any]:
+    """Evidence for behavioral/preference patterns — never this tool's own conclusion.
+
+    Searches role='user' only (their words, not the agent's) across full transcript
+    history via brain. Pass `focus` for one specific angle (e.g. "decisions I keep
+    reversing"); omit it to run a default battery covering frustration, habit, drive,
+    and goal language.
+
+    This tool does not diagnose, summarize, or conclude anything about the user —
+    it hands back excerpts with citations, same as goldfish_search. Turning that
+    into an actual observation — and judging whether it's even worth keeping — is
+    the calling agent's job. If a real pattern shows up across multiple citations,
+    write it with goldfish_remember(type="insight", ...), phrased as tentative
+    pattern-noticing anchored to the evidence, never as a firm psychological claim.
+    Mention it in conversation rarely, only when it's genuinely useful in the
+    moment — this is not a running personality commentary.
+    """
+    try:
+        from brain_mcp.recorder import api as brain_api
+    except ImportError:
+        return {"error": "brain-mcp not installed — see packages/brain in the goldfish repo"}
+
+    queries = [focus] if focus else DEFAULT_REFLECTION_QUERIES
+    results = []
+    for q in queries:
+        hits = brain_api.search(q, role="user", limit=limit_per_query)
+        if not hits.get("abstained"):
+            results.append({"query": q, "hits": hits.get("hits", [])})
+    return {
+        "note": "raw cited evidence only — pattern synthesis is the calling agent's job, not this tool's",
+        "queries_run": len(queries),
+        "queries_with_hits": len(results),
+        "results": results,
+    }
 
 
 @mcp.tool(title="Health across all three memory tiers", annotations={"readOnlyHint": True})

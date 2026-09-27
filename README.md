@@ -31,6 +31,39 @@ Goldfish doesn't replace brain-mcp or claude-mem — it vendors them as-is and
 gives you one server to point an agent at instead of three. See
 [ATTRIBUTION.md](ATTRIBUTION.md) for full upstream credit and licenses.
 
+## Noticing patterns (optional, and deliberately hands-off)
+
+Goldfish can also help an agent notice your own recurring patterns —
+frustrations, habits, stated drives, things you keep saying you should do
+more or less of — and, when it's genuinely relevant, let that shape how it
+talks to you. This isn't a hidden feature; here's exactly how it works and
+where the line is:
+
+- `goldfish_reflect` pulls raw, cited excerpts of things **you've** said
+  (`role="user"` only — never the agent's own words) across your full
+  history. It runs a small default battery of angles (frustration, habit,
+  drive, goal language), or one specific `focus` you give it.
+- It never concludes anything itself — no keyword-matched "you seem
+  stressed" heuristics. Turning evidence into an actual observation is left
+  to whichever LLM is using the tool, because that's the only part of this
+  that requires real judgment.
+- If a pattern holds up across real evidence, the agent can write it with
+  `goldfish_remember(type="insight", ...)` — a note type distinct from plain
+  `user` facts specifically because insights are interpretive and should be
+  revisited over time, not treated as settled truth.
+- Whether to bring an insight up in conversation is the agent's judgment
+  call, and the server's own instructions tell it explicitly: rarely, only
+  when genuinely useful in the moment, never as running commentary on you as
+  a person.
+- Everything stays local. Insight notes live in the same `memory_notes` store
+  as everything else (`~/.goldfish/memory` by default) — never inside this
+  repo, never committed, never sent anywhere. `goldfish_reflect` only ever
+  runs when an agent decides to call it; there's no background job scanning
+  your history for this.
+
+Don't want this at all? Just don't use `goldfish_reflect` or `type="insight"`
+— everything else works exactly the same without it.
+
 ## Install
 
 Paste this repo's link to Claude Code and say "use this" — it'll run the
@@ -81,6 +114,7 @@ Or hand-edit your MCP config (e.g. `~/.claude.json` or a project `.mcp.json`):
 uv run goldfish status                                    # health across all 3 tiers
 uv run goldfish remember my-note "one-liner" --type project --content "..."
 uv run goldfish recall --query "my-note"
+uv run goldfish reflect --focus "decisions I keep reversing"   # raw cited evidence, no synthesis
 ```
 
 ## Repo layout
@@ -109,6 +143,9 @@ Rough priority order, none of this started yet unless marked:
 - [ ] Semantic (embedding) search over curated notes and recent context, not just brain's BM25 over raw transcript
 - [ ] Surface brain's other capture lanes (Cursor, ChatGPT, Pi) through `goldfish_status` more prominently — the data's already there, just under-exposed
 - [ ] A small local dashboard to browse all three tiers side by side, for people who don't want to think in tool calls
+- [x] `goldfish_reflect` + `type="insight"` — cited evidence of the user's own recurring language, synthesized only by the calling agent, surfaced rarely and only in-context
+- [ ] Let `goldfish_reflect` run on an opt-in schedule instead of only when an agent calls it (still local-only, still no auto-surfacing)
+- [ ] Auto-expire or flag stale `insight` notes so pattern-observations don't calcify into permanent "truth"
 
 Have an idea or a use case this doesn't cover? Open an issue.
 
