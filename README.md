@@ -96,6 +96,22 @@ goldfish/
 └── LICENSE              # MIT, covers goldfish/ + memory_notes/ only
 ```
 
+## Roadmap
+
+Rough priority order, none of this started yet unless marked:
+
+- [x] One-command install (`install.sh` — clone, sync, hooks, `claude mcp add`)
+- [ ] `install.sh` also registers goldfish for Codex (`~/.codex/config.toml`), not just Claude Code
+- [ ] `goldfish uninstall` — clean removal mirroring `brain-mcp uninstall` (hooks, scheduler, MCP registration)
+- [ ] Package goldfish as an installable Claude Code plugin (marketplace `.mcp.json` + `hooks.json`) instead of raw MCP config editing
+- [ ] Optional claude-mem auto-install path in `install.sh`, for people who want `goldfish_context` populated out of the box
+- [ ] `goldfish_remember` commits `memory_notes/` to a local git repo automatically, so curated notes get real version history
+- [ ] Semantic (embedding) search over curated notes and recent context, not just brain's BM25 over raw transcript
+- [ ] Surface brain's other capture lanes (Cursor, ChatGPT, Pi) through `goldfish_status` more prominently — the data's already there, just under-exposed
+- [ ] A small local dashboard to browse all three tiers side by side, for people who don't want to think in tool calls
+
+Have an idea or a use case this doesn't cover? Open an issue.
+
 ## Why
 
 Most setups end up with two or three memory tools installed for different
