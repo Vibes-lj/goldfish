@@ -7,6 +7,8 @@
   goldfish_reflect   -> brain (raw cited evidence of the user's own recurring
                         language — frustration, habit, drive, goal talk —
                         never a synthesized conclusion; see its docstring)
+  goldfish_persona   -> memory_notes (PERSONA.md — every insight note
+                        accumulated so far, as one evolving document)
   goldfish_status    -> health across all three backends
 
 brain-mcp and claude-mem each remain independently installable and useful; this
@@ -31,15 +33,22 @@ mcp = MCPServer(
         "One MCP server over three memory tiers for AI coding agents: "
         "goldfish_search (brain-mcp: full cited transcript history), "
         "goldfish_context (claude-mem: recent session-compression summaries), "
-        "goldfish_remember/goldfish_recall (memory_notes: curated durable facts, "
-        "including type='insight' — tentative, evidence-linked observations about "
-        "the user's own patterns). goldfish_reflect gathers raw cited evidence of "
-        "the user's recurring language for you to interpret yourself — it never "
-        "concludes anything on its own. If you notice a real pattern worth keeping, "
-        "write it via goldfish_remember(type='insight', ...) tied to the evidence, "
-        "phrased as tentative noticing, not diagnosis. Bring an insight up in "
-        "conversation only when it's genuinely relevant in the moment — rare and "
-        "well-placed, never a running commentary on the user as a person. "
+        "goldfish_remember/goldfish_recall (memory_notes: curated durable facts). "
+        "\n\n"
+        "Persona evaluation — entirely at your own discretion, never required: "
+        "goldfish_reflect gathers raw cited evidence of the user's own recurring "
+        "language (frustration, habit, drive, goal talk); it never concludes "
+        "anything itself. If a real pattern holds up across multiple genuine "
+        "citations, you may write it via goldfish_remember(type='insight', ...) — "
+        "phrased as tentative noticing anchored to evidence, never diagnosis. "
+        "goldfish_persona reads back everything accumulated this way so far as "
+        "one evolving document — over time it can end up holding patterns the "
+        "user has never explicitly named themselves. You decide, in each moment, "
+        "whether drawing on it would genuinely improve your response or help the "
+        "user — the way a good long-term collaborator notices things without "
+        "narrating them. When you do use it, keep it rare, well-placed, and tied "
+        "to real evidence; never a running commentary on who the user is. "
+        "\n\n"
         "goldfish_status reports which backends are actually installed and healthy."
     ),
 )
@@ -151,6 +160,30 @@ def goldfish_reflect(focus: Optional[str] = None, limit_per_query: int = 5) -> d
     }
 
 
+@mcp.tool(title="Persona evaluation — everything learned about the user so far",
+          annotations={"readOnlyHint": True})
+def goldfish_persona() -> dict[str, Any]:
+    """The cumulative persona file: every insight note, aggregated into one document.
+
+    Entirely optional and at your own discretion — nothing requires you to
+    call this or to use what it returns. It exists so a capable agent can
+    occasionally draw on real, evidence-linked patterns about the user built
+    up over goldfish_reflect calls over time — to shape tone, or catch
+    something worth mentioning — the way a good long-term collaborator would.
+
+    Every entry traces back to cited evidence (see goldfish_reflect); nothing
+    here is a diagnosis, and entries are meant to be revisited as they age,
+    not treated as permanent truth. Use judgment about whether and when
+    surfacing something from this file actually helps the user in the
+    moment — this is not a mandate to comment on who they are.
+    """
+    if not _store.persona_path.exists():
+        return {"available": False, "reason": "no persona notes recorded yet — see goldfish_reflect"}
+    content = _store.persona_path.read_text()
+    insight_count = len(_store.list(type="insight"))
+    return {"available": True, "insight_count": insight_count, "content": content}
+
+
 @mcp.tool(title="Health across all three memory tiers", annotations={"readOnlyHint": True})
 def goldfish_status() -> dict[str, Any]:
     """Health summary across all three memory tiers."""
@@ -167,6 +200,10 @@ def goldfish_status() -> dict[str, Any]:
 
     notes = _store.list()
     status["memory_notes"] = {"ok": True, "count": len(notes), "root": str(_store.root)}
+    status["persona"] = {
+        "insight_count": len(_store.list(type="insight")),
+        "path": str(_store.persona_path),
+    }
 
     return status
 

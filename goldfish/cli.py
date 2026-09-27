@@ -29,6 +29,8 @@ def main(argv: list[str] | None = None) -> None:
     reflect_p.add_argument("--focus", help="one specific angle; omit for the default battery")
     reflect_p.add_argument("--limit-per-query", type=int, default=5)
 
+    sub.add_parser("persona", help="print the cumulative persona file (all insight notes, aggregated)")
+
     args = parser.parse_args(argv)
 
     if args.command == "serve":
@@ -54,6 +56,12 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "reflect":
         from .server import goldfish_reflect
         print(json.dumps(goldfish_reflect(focus=args.focus, limit_per_query=args.limit_per_query), indent=2))
+        return
+
+    if args.command == "persona":
+        from .server import goldfish_persona
+        result = goldfish_persona()
+        print(result["content"] if result.get("available") else result.get("reason", "unavailable"))
         return
 
     parser.print_help()

@@ -33,10 +33,14 @@ gives you one server to point an agent at instead of three. See
 
 ## Noticing patterns (optional, and deliberately hands-off)
 
-Goldfish can also help an agent notice your own recurring patterns —
+Goldfish can also help notice your own recurring patterns over time —
 frustrations, habits, stated drives, things you keep saying you should do
-more or less of — and, when it's genuinely relevant, let that shape how it
-talks to you. This isn't a hidden feature; here's exactly how it works and
+more or less of. The goal is that file is worth reading yourself: given
+enough real sessions, it should eventually surface something about your own
+patterns you hadn't consciously put together before. An agent using goldfish
+can also draw on it, when it's genuinely relevant, to let that shape how it
+talks to you — but you reading it directly is just as much the point as any
+AI doing so. This isn't a hidden feature; here's exactly how it works and
 where the line is:
 
 - `goldfish_reflect` pulls raw, cited excerpts of things **you've** said
@@ -51,18 +55,27 @@ where the line is:
   `goldfish_remember(type="insight", ...)` — a note type distinct from plain
   `user` facts specifically because insights are interpretive and should be
   revisited over time, not treated as settled truth.
-- Whether to bring an insight up in conversation is the agent's judgment
-  call, and the server's own instructions tell it explicitly: rarely, only
-  when genuinely useful in the moment, never as running commentary on you as
-  a person.
-- Everything stays local. Insight notes live in the same `memory_notes` store
-  as everything else (`~/.goldfish/memory` by default) — never inside this
-  repo, never committed, never sent anywhere. `goldfish_reflect` only ever
-  runs when an agent decides to call it; there's no background job scanning
-  your history for this.
+- Every `insight` note also gets folded into **`PERSONA.md`**, one evolving,
+  plain-English document that accumulates everything noticed this way.
+  `goldfish_persona` reads it back in one call for an agent — but it's just a
+  markdown file at `~/.goldfish/memory/PERSONA.md`, so open it yourself
+  whenever you want (`uv run goldfish persona` prints it straight to your
+  terminal). That's exactly why it's held to a higher bar than a plain fact:
+  tentative, cited, and meant to be pruned as it ages, never treated as a
+  verdict — it has to be worth *you* reading, not just an agent.
+- Whether and when to draw on any of this — `goldfish_reflect`,
+  `goldfish_persona`, or an `insight` note — is left entirely to the calling
+  agent's judgment. The server's own instructions say so explicitly: rare,
+  well-placed, tied to real evidence, never a running commentary on who you
+  are. Nothing here is forced into every response.
+- Everything stays local. `PERSONA.md` and every `insight` note live in the
+  same `memory_notes` store as everything else (`~/.goldfish/memory` by
+  default) — never inside this repo, never committed, never sent anywhere.
+  `goldfish_reflect` only ever runs when an agent decides to call it; there's
+  no background job scanning your history for this.
 
-Don't want this at all? Just don't use `goldfish_reflect` or `type="insight"`
-— everything else works exactly the same without it.
+Don't want this at all? Just don't use `goldfish_reflect`, `goldfish_persona`,
+or `type="insight"` — everything else works exactly the same without it.
 
 ## Install
 
@@ -115,6 +128,7 @@ uv run goldfish status                                    # health across all 3 
 uv run goldfish remember my-note "one-liner" --type project --content "..."
 uv run goldfish recall --query "my-note"
 uv run goldfish reflect --focus "decisions I keep reversing"   # raw cited evidence, no synthesis
+uv run goldfish persona                                        # print the accumulated PERSONA.md
 ```
 
 ## Repo layout
