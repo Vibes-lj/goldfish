@@ -1,0 +1,27 @@
+[project]
+name = "goldfish"
+version = "0.1.0"
+description = "Unified memory system for AI coding agents — cited transcript search, session-context recall, and curated long-term notes behind one MCP server."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=2,<3",
+    "brain-mcp",
+]
+
+[project.urls]
+Homepage = "https://github.com/Vibes-lj/goldfish"
+
+[project.scripts]
+goldfish = "goldfish.cli:main"
+
+[tool.uv.sources]
+brain-mcp = { path = "packages/brain", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["goldfish", "memory_notes"]

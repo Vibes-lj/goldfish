@@ -1,0 +1,28 @@
+# goldfish's own data — never commit real memory data
+.goldfish/
+*.duckdb
+*.sqlite
+*.sqlite3
+*.db
+
+# python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+build/
+dist/
+dist-*/
+
+# node (claude-mem)
+node_modules/
+*.log
+
+# os
+.DS_Store
+
+# secrets
+.env
+.env.*
+*.pem
+*token*.json

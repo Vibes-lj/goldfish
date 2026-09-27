@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,legacy]"
+
+      - name: Run tests
+        run: pytest tests/ -v
+
+      # A "Verify SHELET skill manifests" step ran scripts/verify_skills.py here until 2026-08-20.
+      # b1da38f (2.0.0b1, THE RECORDER) deleted both that script and the .claude/skills tree it
+      # validated, but left the step behind — so every matrix leg died in ~1s on a missing file,
+      # and the red X said "tests failed" when the tests had in fact passed. The gate had nothing
+      # left to gate: this repo now contains zero SKILL.md files. Removed rather than restored.
+      # If skills come back, recover it with `git show 7235db0:scripts/verify_skills.py`.
