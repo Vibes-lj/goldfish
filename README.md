@@ -33,14 +33,36 @@ gives you one server to point an agent at instead of three. See
 
 ## Install
 
+Paste this repo's link to Claude Code and say "use this" — it'll run the
+installer itself. Or run it yourself:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Vibes-lj/goldfish/master/install.sh | bash
+```
+
+That one command clones goldfish, syncs its Python env, turns on brain-mcp's
+transcript-capture hooks for Claude Code, and registers `goldfish` as an MCP
+server via `claude mcp add` — restart Claude Code (or run `/mcp`) afterward
+and the five tools below are live. Re-running it is safe (idempotent).
+
+Prefer to wire it up by hand instead? See [manual setup](#manual-setup) below.
+
+claude-mem's own hooks/worker aren't installed by the script — that's a
+separate project with its own setup. `goldfish_context` just reads its
+database read-only if you've already installed it yourself; see
+`packages/claude-mem/README.md`.
+
+## Manual setup
+
 ```bash
 git clone https://github.com/Vibes-lj/goldfish.git
 cd goldfish
 uv sync
-uv run goldfish status
+uv run --directory packages/brain brain-mcp install cc   # optional: transcript capture hooks
+claude mcp add goldfish -s user -- uv run --directory "$(pwd)" goldfish serve
 ```
 
-Register it as an MCP server (e.g. in `~/.claude.json` or `.mcp.json`):
+Or hand-edit your MCP config (e.g. `~/.claude.json` or a project `.mcp.json`):
 
 ```json
 {
@@ -52,11 +74,6 @@ Register it as an MCP server (e.g. in `~/.claude.json` or `.mcp.json`):
   }
 }
 ```
-
-claude-mem's own hooks/worker need to already be installed separately for
-`goldfish_context` to have anything to read (goldfish only reads its database,
-it doesn't run claude-mem itself). brain-mcp's capture hooks likewise need
-their own install step — see each package's README under `packages/`.
 
 ## CLI
 
